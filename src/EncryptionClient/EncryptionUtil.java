@@ -5,11 +5,7 @@
  */
 package EncryptionClient;
 
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import Utilities.IOUtilities;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
@@ -19,47 +15,46 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
-import javax.imageio.ImageIO;
-import Utilities.IOUtilities;
-import java.security.InvalidKeyException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- *
  * @author Jesus
  */
 public class EncryptionUtil {
 
-    byte[] ImageBytes = null;
-    PasswordField pass = new PasswordField();
-    Text text = new Text("Please type password for encryption");
+    private PasswordField pass = new PasswordField();
+    private Text text = new Text("Please type password for encryption");
+    private static byte[] imageBytes = null;
 
-    public void loadImage(ImageView im) {
-        try {
-            FileChooser fileChooser = new FileChooser();
-            FileChooser.ExtensionFilter extFilterJPG = new FileChooser.ExtensionFilter("Image files", "*.JPG", "*.PNG");
-            fileChooser.getExtensionFilters().addAll(extFilterJPG);
-            File file = fileChooser.showOpenDialog(null);
+     static void loadImage(ImageView im) throws Exception {
+        FileChooser fileChooser = new FileChooser();
+        FileChooser.ExtensionFilter extFilterJPG = new FileChooser.ExtensionFilter("Image files", "*.JPG", "*.PNG");
+        fileChooser.getExtensionFilters().addAll(extFilterJPG);
+        File file = fileChooser.showOpenDialog(null);
 
-            BufferedImage bufferedImage = ImageIO.read(file);
-            Image image = SwingFXUtils.toFXImage(bufferedImage, null);
-            im.setImage(image);
-            ImageBytes = IOUtilities.getImageRawBytes(file.getAbsolutePath());
-        } catch (IOException ex) {
-            Logger.getLogger(EncryptionMain.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (Exception ex) {
-            Logger.getLogger(EncryptionUtil.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        BufferedImage bufferedImage = ImageIO.read(file);
+        Image image = SwingFXUtils.toFXImage(bufferedImage, null);
+        im.setImage(image);
+
+        imageBytes = IOUtilities.getImageRawBytes(file.getAbsolutePath());
+        //printBytes(imageBytes, "Image bytes");
     }
 
-    public void showEncryptButtons(Button but, BorderPane bor) {
+    void showEncryptButtons(Button but, BorderPane bor) {
 
         GridPane grid2 = new GridPane();
         grid2.setVgap(5);
@@ -75,40 +70,61 @@ public class EncryptionUtil {
         byte[] trimmedHash = null;
         try {
             byte[] PasswordBytes = password.toString().getBytes();
+            printBytes(PasswordBytes, "password bytes");
+
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(PasswordBytes);
 
-            for (int i = 0; i < 16+1; i++) {
+            for (int i = 0; i < 16 + 1; i++) {
                 trimmedHash = Arrays.copyOf(hash, i);
             }
 
         } catch (NoSuchAlgorithmException ex) {
             Logger.getLogger(EncryptionUtil.class.getName()).log(Level.SEVERE, null, ex);
         }
+        printBytes(trimmedHash, "Trimmed bytes");
         return trimmedHash;
     }
 
-    public byte[] ConvertSHA256toAES(PasswordField password) throws NoSuchAlgorithmException, NoSuchPaddingException {
+    private byte[] ConvertSHA256toAES(PasswordField password) throws NoSuchAlgorithmException, NoSuchPaddingException {
         byte[] finalHash = null;
         try {
             Cipher cipher = Cipher.getInstance("AES");
+            printBytes(returnSHA256fromPasswordBytesAndTrimIt(password), "Trimmed key bytes");
             SecretKeySpec key = new SecretKeySpec(returnSHA256fromPasswordBytesAndTrimIt(password), "AES");
+            System.out.println("Key2:" +key);
             cipher.init(Cipher.ENCRYPT_MODE, key);
-            finalHash = cipher.doFinal(ImageBytes);
+            finalHash = cipher.doFinal(imageBytes);
+            //printBytes(finalHash, "final hash");
         } catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException ex) {
             Logger.getLogger(EncryptionUtil.class
                     .getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return finalHash;
     }
 
-    public void encryptFinal() {
+    void encryptFinal() {
         try {
-            IOUtilities.writeImageRawBytes(ConvertSHA256toAES(pass), "Encrypted.jpg");
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException ex) {
-            Logger.getLogger(EncryptionUtil.class.getName()).log(Level.SEVERE, null, ex);
+            IOUtilities.writeImageRawBytes(ConvertSHA256toAES(pass),"Encrypted.jpg");
+          //  saveToTXT(ConvertSHA256toAES(pass));
+            System.out.println("Encrypted!");
         } catch (Exception ex) {
             Logger.getLogger(EncryptionUtil.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    private static void printBytes(byte[] b, String s){
+        System.out.println(s+": ");
+        for (byte i = 0; i < b.length; i++) {
+            System.out.format("%02x",i);
+        }
+        System.out.println();
+    }
+
+    private void saveToTXT(byte[] hash) throws IOException {
+        PrintWriter print = new PrintWriter("hash.txt");
+        for (byte i = 0; i < hash.length; i++) {
+            print. format("%02x",i);    }
     }
 }

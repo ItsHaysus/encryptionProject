@@ -1,6 +1,5 @@
 package DecryptingClient;
 
-import EncryptionClient.EncryptionUtil;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -16,8 +15,9 @@ public class DecryptingMain extends Application {
     GridPane root = new GridPane();
     DecryptingUtil decrypt = new DecryptingUtil();
     Button LoadEncryptedImage = new Button("Load Encrypted Image");
-    Button showDecryptionOptions = new Button("Image");
-    Button BeginDecryption = new Button("Encrypt");
+    Button showDecryptionOptions = new Button("Decrypt Image");
+    Button BeginDecryption = new Button("Decrypt");
+
     @Override
     public void start(Stage primaryStage) throws Exception {
         ImageView im = new ImageView();
@@ -31,13 +31,19 @@ public class DecryptingMain extends Application {
         root.add(showDecryptionOptions, 1, 0);
 
         LoadEncryptedImage.setOnAction((event) -> {
-            decrypt.loadEncryptedImage();
+            try {
+                decrypt.loadEncryptedImage();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
 
         showDecryptionOptions.setOnAction((event) -> {
+            decrypt.showEncryptButtons(BeginDecryption, border);
         });
 
         BeginDecryption.setOnAction((event) -> {
+            decrypt.DecryptFinal();
         });
 
         Scene scene = new Scene(border, 300, 250);
@@ -51,5 +57,5 @@ public class DecryptingMain extends Application {
         launch(args);
     }
 
-    }
+}
 
