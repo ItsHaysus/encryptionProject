@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="GUIImageEncryption">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/dist/GUIImageEncryption.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
